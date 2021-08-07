@@ -25,29 +25,25 @@ func (d *Database) GetMemoryZone(fld string) *Zone {
 	return nil
 }
 
-func (d *Database) FindMemoryRecord(zone *Zone, dnsType, subdomain string) []RecordEntry {
+func (d *Database) FindMemoryRecord(zone *Zone, dnsType uint16, subdomain string) []RecordEntry {
 	if subdomain == "" {
 		subdomain = "@"
 	}
 	for i := range zone.Records {
 		record := &zone.Records[i]
 		if record.Name == subdomain {
-			rule := record.GetRuleByDnsType(dnsType)
+			rule := record.Rules[dnsType]
 			switch rule {
 			case "loadbalance":
-				// mutex := *record.GetEntriesMutexByDnsType(dnsType)
-				// mutex.Lock()
-				r := record.GetRecordEntriesByDnsType(dnsType).GetBalanced()
+				r := record.Entries[dnsType].GetBalanced()
 				if r == nil {
 					return nil
 				}
-				ret := []RecordEntry{
+				return []RecordEntry{
 					*r,
 				}
-				// mutex.Unlock()
-				return ret
 			case "random":
-				r := record.GetRecordEntriesByDnsType(dnsType).GetRandom()
+				r := record.Entries[dnsType].GetRandom()
 				if r == nil {
 					return nil
 				}
@@ -55,7 +51,7 @@ func (d *Database) FindMemoryRecord(zone *Zone, dnsType, subdomain string) []Rec
 					*r,
 				}
 			case "all":
-				return *record.GetRecordEntriesByDnsType(dnsType)
+				return *record.Entries[dnsType]
 			}
 		}
 	}

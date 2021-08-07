@@ -1,81 +1,76 @@
 package main
 
 import (
+	"encoding/json"
 	"math/rand"
 	"sort"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 type Record struct {
-	Name    string `json:"name"`
-	A       string `json:"A"`
-	AAAA    string `json:"AAAA"`
-	CNAME   string `json:"CNAME"`
-	NS      string `json:"NS"`
-	TXT     string `json:"TXT"`
-	Entries struct {
-		A     RecordEntries `json:"A"`
-		AAAA  RecordEntries `json:"AAAA"`
-		CNAME RecordEntries `json:"CNAME"`
-		NS    RecordEntries `json:"NS"`
-		TXT   RecordEntries `json:"TXT"`
-	} `json:"entries"`
-	// entriesMutex struct {
-	// 	A     sync.Mutex
-	// 	AAAA  sync.Mutex
-	// 	CNAME sync.Mutex
-	// 	NS    sync.Mutex
-	// 	TXT   sync.Mutex
-	// }
+	Name    string
+	Rules   map[uint16]string
+	Entries map[uint16]*RecordEntries
 }
 
-func (r *Record) GetRuleByDnsType(dnsType string) string {
-	switch dnsType {
-	case "A":
-		return r.A
-	case "AAAA":
-		return r.AAAA
-	case "CNAME":
-		return r.CNAME
-	case "NS":
-		return r.NS
-	case "TXT":
-		return r.TXT
+func (r *Record) UnmarshalJSON(data []byte) error {
+	var d map[string]interface{}
+	err := json.Unmarshal(data, &d)
+	if err != nil {
+		return err
 	}
-	return ""
-}
 
-func (r *Record) GetRecordEntriesByDnsType(dnsType string) *RecordEntries {
-	switch dnsType {
-	case "A":
-		return &r.Entries.A
-	case "AAAA":
-		return &r.Entries.AAAA
-	case "CNAME":
-		return &r.Entries.CNAME
-	case "NS":
-		return &r.Entries.NS
-	case "TXT":
-		return &r.Entries.TXT
+	r.Name = d["name"].(string)
+
+	r.Rules = make(map[uint16]string)
+
+	r.Rules[dns.TypeA] = d["A"].(string)
+	r.Rules[dns.TypeAAAA] = d["AAAA"].(string)
+	r.Rules[dns.TypeCNAME] = d["CNAME"].(string)
+	r.Rules[dns.TypeNS] = d["NS"].(string)
+	r.Rules[dns.TypeTXT] = d["TXT"].(string)
+
+	r.Entries = make(map[uint16]*RecordEntries)
+
+	f := func(dnsTypeStr string, dnsTypeUint16 uint16) error {
+		e, err := json.Marshal(d["entries"].(map[string]interface{})[dnsTypeStr])
+		if err != nil {
+			return err
+		}
+		var re RecordEntries
+		re.Init()
+		err = json.Unmarshal(e, &re)
+		if err != nil {
+			return err
+		}
+		r.Entries[dnsTypeUint16] = &re
+		return nil
+	}
+
+	err = f("A", dns.TypeA)
+	if err != nil {
+		return err
+	}
+	err = f("AAAA", dns.TypeAAAA)
+	if err != nil {
+		return err
+	}
+	err = f("CNAME", dns.TypeCNAME)
+	if err != nil {
+		return err
+	}
+	err = f("NS", dns.TypeNS)
+	if err != nil {
+		return err
+	}
+	err = f("TXT", dns.TypeTXT)
+	if err != nil {
+		return err
 	}
 	return nil
 }
-
-// func (r *Record) GetEntriesMutexByDnsType(dnsType string) *sync.Mutex {
-// 	switch dnsType {
-// 	case "A":
-// 		return &r.entriesMutex.A
-// 	case "AAAA":
-// 		return &r.entriesMutex.AAAA
-// 	case "CNAME":
-// 		return &r.entriesMutex.CNAME
-// 	case "NS":
-// 		return &r.entriesMutex.NS
-// 	case "TXT":
-// 		return &r.entriesMutex.TXT
-// 	}
-// 	return nil
-// }
 
 type RecordEntries []RecordEntry
 
@@ -105,7 +100,6 @@ func (r *RecordEntries) GetBalanced() *RecordEntry {
 		if (*r)[i].w > 0 {
 			(*r)[i].w--
 			ret := &(*r)[i]
-			// fmt.Printf("GetBalanced(): %p\n", ret)
 			return ret
 		}
 	}
@@ -149,11 +143,11 @@ func (z *Zones) Init() {
 		v := &(*z)[i]
 		for j := range v.Records {
 			r := &v.Records[j]
-			r.Entries.A.Init()
-			r.Entries.AAAA.Init()
-			r.Entries.CNAME.Init()
-			r.Entries.NS.Init()
-			r.Entries.TXT.Init()
+			r.Entries[dns.TypeA].Init()
+			r.Entries[dns.TypeAAAA].Init()
+			r.Entries[dns.TypeCNAME].Init()
+			r.Entries[dns.TypeNS].Init()
+			r.Entries[dns.TypeTXT].Init()
 		}
 	}
 }
