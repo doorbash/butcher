@@ -16,5 +16,5 @@ Help Options:
 
 ## Example
 ```
-./butcher -c example.json 0.0.0.0:53
+./butcher -c config.json 0.0.0.0:53
 ```
