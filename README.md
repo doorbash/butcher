@@ -18,3 +18,8 @@ Help Options:
 ```
 ./butcher -c config.json 0.0.0.0:53
 ```
+
+**Docker:**
+```
+docker run --restart always -d --name butcher -v $(pwd)/config.json:/config.json:ro -p 53:53/udp doorbash/butcher
+```

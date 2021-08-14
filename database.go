@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -16,10 +15,10 @@ func (d *Database) GetAllZones() *Zones {
 }
 
 func (d *Database) GetMemoryZone(fld string) *Zone {
-	for _, v := range d.zones {
-		fmt.Println(v.Name)
+	for i := range d.zones {
+		v := &d.zones[i]
 		if v.Name == fld {
-			return &v
+			return v
 		}
 	}
 	return nil
