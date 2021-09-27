@@ -20,12 +20,6 @@ Help Options:
 ```
 
 **Docker:**
-
-Build:
 ```
-docker build -t doorbash/butcher .
-```
-Run:
-```
-docker run --restart always -d --name butcher -v $(pwd)/config.json:/config.json:ro -p 53:53/udp doorbash/butcher
+docker run --name butcher --restart always -d -v $(pwd)/config.json:/config.json:ro -p 53:53/udp doorbash/butcher
 ```
