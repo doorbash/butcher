@@ -21,5 +21,5 @@ Help Options:
 
 **Docker:**
 ```
-docker run --name butcher --restart always -d -v $(pwd)/config.json:/config.json:ro -p 53:53/udp doorbash/butcher
+docker run --name butcher --restart always -d -v $(pwd)/config.json:/config.json:ro -p 53:53/udp ghcr.io/doorbash/butcher:latest
 ```

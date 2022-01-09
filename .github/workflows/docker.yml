@@ -29,6 +29,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1 
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -45,5 +52,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/butcher:${{ github.event.release.name }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/butcher:latest
+            ghcr.io/${{ github.repository_owner }}/butcher:${{ github.event.release.name }}
+            ghcr.io/${{ github.repository_owner }}/butcher:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
